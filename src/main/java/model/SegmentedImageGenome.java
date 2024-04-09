@@ -7,12 +7,15 @@ public class SegmentedImageGenome implements IGenome {
 
     public float Fitness;
 
-    private ArrayList<Integer> genome;
+    public ArrayList<Integer> genome;
 
-    public SegmentedImageGenome(Collection<Integer> genome) {
-        this.genome = new ArrayList<>(genome);
+    public SegmentedImageGenome(ArrayList<Integer> genome) {
+        this.genome = genome;
         Fitness = -1;
     }
 
-
+    @Override
+    public int GetGenomeLength() {
+        return genome.size();
+    }
 }

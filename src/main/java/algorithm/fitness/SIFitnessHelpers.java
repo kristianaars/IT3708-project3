@@ -1,45 +1,132 @@
 package algorithm.fitness;
 
 import helpers.ImageHelper;
+import model.SIProblemInstance;
 import model.SegmentedImageGenome;
 
 import java.awt.image.BufferedImage;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class SIFitnessHelpers {
+    private final SIProblemInstance ProblemInstance;
 
-    public final BufferedImage SourceImage;
+    private final BufferedImage SourceImage;
 
-    public SIFitnessHelpers(BufferedImage sourceImage) {
-        this.SourceImage = sourceImage;
+    private final int SegmentCount;
+
+    public SIFitnessHelpers(SIProblemInstance problemInstance) {
+        this.ProblemInstance = problemInstance;
+
+        this.SourceImage = problemInstance.TestImage;
+        this.SegmentCount = problemInstance.SegmentCount;
     }
 
+    /**
+     * Calculates the edge value of a segmented image genome.
+     *
+     * @param individual The segmented image genome for which the edge value is calculated.
+     * @return The edge value of the segmented image genome.
+     */
     public float EdgeValue(SegmentedImageGenome individual) {
+        // Initialize edge value
         float edgeValue = 0;
-        int w = SourceImage.getWidth(); // Image width
+
+        // Get the width of the source image
+        int w = SourceImage.getWidth();
+
+        // Get the length of the genome
         int l = individual.GetGenomeLength();
 
-        int N = individual.GetGenomeLength();
-        for(int i = 0; i < N; i++) {
+        // Loop through each pixel in the genome
+        for(int i = 0; i < l; i++) {
+            // Get the neighborhood of the current pixel
             int[] J = F(i);
 
+            // Loop through each neighboring pixel
             for(int j : J) {
-                if(j < 0 || j > l) continue; // Skip if neighborhood is outside of image bounds
+                // Skip if neighborhood is outside of image bounds
+                if(j < 0 || j >= l) continue;
 
+                // Get the segments of the current and neighboring pixels
                 int c_i = individual.genome.get(i);
                 int c_j = individual.genome.get(j);
 
-                // TODO: Sjekk med TA om det er riktig antagelse av logikken
+                // TODO: Dobbeltsjekk med TA om antagelsen min her er riktig
+                // Check if the segment of the current and neighboring pixels are different
                 if(c_i != c_j) {
+                    // Get the RGB values of the current and neighboring pixels
                     int[] rgb_i = ImageHelper.GetRGBArray(SourceImage, i % w, i / w);
                     int[] rgb_j = ImageHelper.GetRGBArray(SourceImage, j % w, j / w);
 
+                    // Calculate the RGB distance between the current and neighboring pixels
                     edgeValue += RGBDistance(rgb_i, rgb_j);
                 }
-
             }
         }
 
+        // Return the calculated edge value
         return edgeValue;
+    }
+
+    public float ConnectivityMeasure(SegmentedImageGenome individual) {
+        float connectivityMeasure = 0;
+
+        int l = individual.GetGenomeLength();
+
+        for(int i = 0; i < l; i++) {
+
+            int[] J = F(i);
+
+            for(int j : J) {
+                // Skip if neighborhood is outside of image bounds
+                if(j < 0 || j >= l) continue;
+
+                // Get the segments of the current and neighboring pixels
+                int c_i = individual.genome.get(i);
+                int c_j = individual.genome.get(j);
+
+                if(c_i != c_j) {
+                    // Add penalty if neighboring pixels are not in same segment
+                    connectivityMeasure += (float) (1.0 / 8);
+                }
+            }
+        }
+
+        return connectivityMeasure;
+    }
+
+    public float OverallDeviation(SegmentedImageGenome individual) {
+        // Get the width of the source image
+        int w = SourceImage.getWidth();
+
+        float deviation = 0;
+
+        for(int k = 0; k < SegmentCount; k++) {
+            List<Integer> k_indices = IntStream.range(0, individual.GetGenomeLength())
+                    .filter(i -> individual.genome.get(i) == k)
+                    .boxed()
+                    .toList();
+
+            // mu_k will contain the average pixel value for the given segment
+            int[] mu_k = new int[3];
+            for(int i : k_indices) {
+                int[] rgb_i = ImageHelper.GetRGBArray(SourceImage, i % w, i / w);
+                mu_k[0] += rgb_i[0];
+                mu_k[1] += rgb_i[1];
+                mu_k[2] += rgb_i[2];
+            }
+
+            mu_k[0] /= k_indices.size(); mu_k[1] /= k_indices.size(); mu_k[2] /= k_indices.size();
+
+            for(int i : k_indices) {
+                int[] rgb_i = ImageHelper.GetRGBArray(SourceImage, i % w, i / w);
+                deviation += RGBDistance(rgb_i, mu_k);
+            }
+        }
+
+        return deviation;
     }
 
     /**

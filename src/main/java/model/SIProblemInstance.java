@@ -13,8 +13,11 @@ public class SIProblemInstance {
 
     public final BufferedImage TestImage;
 
-    public SIProblemInstance(int instanceId) throws IOException {
+    public final int SegmentCount;
+
+    public SIProblemInstance(int instanceId, int segmentCount) throws IOException {
         this.InstanceId = instanceId;
+        this.SegmentCount = segmentCount;
         this.TestImage = LoadImage("Test image.jpg");
     }
 

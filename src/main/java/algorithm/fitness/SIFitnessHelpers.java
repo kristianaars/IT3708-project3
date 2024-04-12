@@ -104,8 +104,10 @@ public class SIFitnessHelpers {
         float deviation = 0;
 
         for(int k = 0; k < SegmentCount; k++) {
+            int finalK = k; // To make k compatible with lambda function
+
             List<Integer> k_indices = IntStream.range(0, individual.GetGenomeLength())
-                    .filter(i -> individual.genome.get(i) == k)
+                    .filter(i -> individual.genome.get(i) == finalK)
                     .boxed()
                     .toList();
 

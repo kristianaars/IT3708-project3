@@ -1,22 +1,22 @@
 package algorithm.fitness;
 
-import helpers.ImageHelper;
+import utils.ImageUtils;
 import model.SIProblemInstance;
 import model.SegmentedImageGenome;
 
 import java.awt.image.BufferedImage;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class SIFitnessHelpers {
+public class SIFitnessHelper {
+
     private final SIProblemInstance ProblemInstance;
 
     private final BufferedImage SourceImage;
 
     private final int SegmentCount;
 
-    public SIFitnessHelpers(SIProblemInstance problemInstance) {
+    public SIFitnessHelper(SIProblemInstance problemInstance) {
         this.ProblemInstance = problemInstance;
 
         this.SourceImage = problemInstance.TestImage;
@@ -57,8 +57,8 @@ public class SIFitnessHelpers {
                 // Check if the segment of the current and neighboring pixels are different
                 if(c_i != c_j) {
                     // Get the RGB values of the current and neighboring pixels
-                    int[] rgb_i = ImageHelper.GetRGBArray(SourceImage, i % w, i / w);
-                    int[] rgb_j = ImageHelper.GetRGBArray(SourceImage, j % w, j / w);
+                    int[] rgb_i = ImageUtils.GetRGBArray(SourceImage, i % w, i / w);
+                    int[] rgb_j = ImageUtils.GetRGBArray(SourceImage, j % w, j / w);
 
                     // Calculate the RGB distance between the current and neighboring pixels
                     edgeValue += RGBDistance(rgb_i, rgb_j);
@@ -114,7 +114,7 @@ public class SIFitnessHelpers {
             // mu_k will contain the average pixel value for the given segment
             int[] mu_k = new int[3];
             for(int i : k_indices) {
-                int[] rgb_i = ImageHelper.GetRGBArray(SourceImage, i % w, i / w);
+                int[] rgb_i = ImageUtils.GetRGBArray(SourceImage, i % w, i / w);
                 mu_k[0] += rgb_i[0];
                 mu_k[1] += rgb_i[1];
                 mu_k[2] += rgb_i[2];
@@ -123,7 +123,7 @@ public class SIFitnessHelpers {
             mu_k[0] /= k_indices.size(); mu_k[1] /= k_indices.size(); mu_k[2] /= k_indices.size();
 
             for(int i : k_indices) {
-                int[] rgb_i = ImageHelper.GetRGBArray(SourceImage, i % w, i / w);
+                int[] rgb_i = ImageUtils.GetRGBArray(SourceImage, i % w, i / w);
                 deviation += RGBDistance(rgb_i, mu_k);
             }
         }

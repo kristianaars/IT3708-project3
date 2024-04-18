@@ -1,16 +1,13 @@
-package helpers;
+package utils;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 
-public class ImageHelper {
+public class ImageUtils {
 
     public static BufferedImage LoadImage(String resourcePath) throws IOException {
-        return ImageIO.read(ImageHelper.class.getResource(resourcePath));
+        return ImageIO.read(ImageUtils.class.getResource(resourcePath));
     }
 
     public static int[] GetRGBArray(BufferedImage bufferedImage, int x, int y) {

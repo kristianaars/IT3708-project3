@@ -1,6 +1,6 @@
 package model;
 
-import helpers.ImageHelper;
+import utils.ImageUtils;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -22,7 +22,7 @@ public class SIProblemInstance {
     }
 
     private BufferedImage LoadImage(String fileName) throws IOException {
-        return ImageHelper.LoadImage(ROOT_RES_PATH + "/" + InstanceId + "/" + fileName);
+        return ImageUtils.LoadImage(ROOT_RES_PATH + "/" + InstanceId + "/" + fileName);
     }
 
 }

@@ -4,6 +4,6 @@ import model.IGenome;
 
 public interface IFitnessCalculator<I extends IGenome> {
 
-    public float CalculateFitness(I genome);
+    public IFitness CalculateFitness(I genome);
 
 }

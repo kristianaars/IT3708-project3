@@ -20,7 +20,7 @@ public class SIFitnessHelper {
         this.ProblemInstance = problemInstance;
 
         this.SourceImage = problemInstance.TestImage;
-        this.SegmentCount = problemInstance.SegmentCount;
+        this.SegmentCount = problemInstance.MaxSegmentCount;
     }
 
     /**

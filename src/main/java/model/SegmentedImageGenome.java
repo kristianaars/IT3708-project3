@@ -1,17 +1,22 @@
 package model;
 
+import algorithm.fitness.IFitness;
+
 import java.util.ArrayList;
-import java.util.Collection;
 
 public class SegmentedImageGenome implements IGenome {
 
-    public float Fitness;
+    public IFitness Fitness;
 
     public ArrayList<Integer> genome;
 
     public SegmentedImageGenome(ArrayList<Integer> genome) {
         this.genome = genome;
-        Fitness = -1;
+    }
+
+    @Override
+    public IFitness GetFitness() {
+        return Fitness;
     }
 
     @Override

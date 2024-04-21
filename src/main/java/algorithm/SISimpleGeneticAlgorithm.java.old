@@ -13,7 +13,9 @@ import algorithm.selection.ISelection;
 import algorithm.selection.SISelectTopFitness;
 import model.SIProblemInstance;
 import model.SegmentedImageGenome;
+import utils.SegmentImageUtils;
 
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -30,6 +32,8 @@ public class SISimpleGeneticAlgorithm implements IGeneticAlgorithm<SegmentedImag
 
     private ArrayList<SegmentedImageGenome> Population;
 
+    private final SegmentImageUtils SegmentImgUtils;
+
     public SISimpleGeneticAlgorithm(ArrayList<SegmentedImageGenome> population, SIProblemInstance problemInstance) {
         this.ProblemInstance = problemInstance;
         this.Population = population;
@@ -42,6 +46,8 @@ public class SISimpleGeneticAlgorithm implements IGeneticAlgorithm<SegmentedImag
         FitnessCalculator = new SegmentedImageWSFCalculator(ProblemInstance);
         Select = new SISelectTopFitness();
         ParentSelection = new SIFitnessProportionalProbabilityParentSelection();
+
+        SegmentImgUtils = new SegmentImageUtils(ProblemInstance.ImageWidth, ProblemInstance.ImageHeight);
     }
 
     @Override
@@ -49,6 +55,9 @@ public class SISimpleGeneticAlgorithm implements IGeneticAlgorithm<SegmentedImag
         int populationSize = Population.size();
         int nParents = 2;
         int nOffspring = populationSize;
+
+        // Calculate initial fitness before training begins
+        CalculateFitness(Population);
 
         for(int e = 0; e < epochs; e++) {
             ArrayList<SegmentedImageGenome> parentPool = ParentSelection.SelectParents(Population, nParents);
@@ -67,14 +76,15 @@ public class SISimpleGeneticAlgorithm implements IGeneticAlgorithm<SegmentedImag
 
             Population = Select.Select(Population, populationSize);
 
-            /*if(e % 2500 == 0) {
-                System.out.printf("Epoch: %s; Average fitness: %.3f; Min fitness: %.3f; Max fitness: %.3f; Best Solution: %s\n",
+            if(e % 1 == 0) {
+                BufferedImage sampleImg = SegmentImgUtils.GenerateSegmentedImage(Population.getFirst());
+
+                System.out.printf("Epoch: %s; Average fitness: %.3f; Min fitness: %.3f; Max fitness: %.3f;s\n",
                         e,
                         GetAveragePopulationFitness(),
                         GetMinPopulationFitness(),
-                        GetMaxPopulationFitness(),
-                        GetBestSolution());
-            }*/
+                        GetMaxPopulationFitness());
+            }
         }
     }
 
@@ -96,6 +106,18 @@ public class SISimpleGeneticAlgorithm implements IGeneticAlgorithm<SegmentedImag
 
     public void CalculateFitness(SegmentedImageGenome individual) {
         individual.Fitness = FitnessCalculator.CalculateFitness(individual);
+    }
+
+    public float GetAveragePopulationFitness() {
+        return (float) Population.stream().mapToDouble(i -> i.Fitness.GetFitness()).average().orElse(0);
+    }
+
+    public float GetMaxPopulationFitness() {
+        return (float) Population.stream().mapToDouble(i -> i.Fitness.GetFitness()).max().orElse(0);
+    }
+
+    public float GetMinPopulationFitness() {
+        return (float) Population.stream().mapToDouble(i -> i.Fitness.GetFitness()).min().orElse(0);
     }
 
 }

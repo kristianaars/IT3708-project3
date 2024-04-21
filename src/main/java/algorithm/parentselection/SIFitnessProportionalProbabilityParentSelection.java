@@ -1,12 +1,13 @@
 package algorithm.parentselection;
 
+import model.SIGraphGenome;
 import model.SegmentedImageGenome;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class SIFitnessProportionalProbabilityParentSelection implements IParentSelection<SegmentedImageGenome> {
+public class SIFitnessProportionalProbabilityParentSelection implements IParentSelection<SIGraphGenome> {
 
     private final Random RandomInstance;
 
@@ -15,15 +16,15 @@ public class SIFitnessProportionalProbabilityParentSelection implements IParentS
     }
 
     @Override
-    public ArrayList<SegmentedImageGenome> SelectParents(ArrayList<SegmentedImageGenome> population, int delta) {
+    public ArrayList<SIGraphGenome> SelectParents(ArrayList<SIGraphGenome> population, int delta) {
         double[] P = FitnessProportionalProbability(population);
         return StochasticUniversalSampling(population, P, delta);
     }
 
-    private double[] FitnessProportionalProbability(ArrayList<SegmentedImageGenome> pool) {
-        double beta_t = pool.stream().mapToDouble(i -> i.Fitness.GetFitness()).min().orElse(0);
-        double sumFitness = 1.0 / pool.stream().mapToDouble(i -> (i.Fitness.GetFitness() - beta_t)).sum();
-        double[] P = pool.stream().mapToDouble(i -> (1.0 - (i.Fitness.GetFitness() - beta_t) / sumFitness)).toArray();
+    private double[] FitnessProportionalProbability(ArrayList<SIGraphGenome> pool) {
+        double beta_t = pool.stream().mapToDouble(i -> (1.0f / i.Fitness.GetFitness())).min().orElse(0);
+        double sumFitness = 1.0 / pool.stream().mapToDouble(i -> ((1.0f / i.Fitness.GetFitness()) - beta_t)).sum();
+        double[] P = pool.stream().mapToDouble(i -> (1.0 - ((1.0f / i.Fitness.GetFitness()) - beta_t) / sumFitness)).toArray();
 
         double p_sum = 0;
         for(double p : P) {
@@ -39,13 +40,13 @@ public class SIFitnessProportionalProbabilityParentSelection implements IParentS
         return P;
     }
 
-    private ArrayList<SegmentedImageGenome> StochasticUniversalSampling(ArrayList<SegmentedImageGenome> selectionPool, double[] selectionP, int delta) {
+    private ArrayList<SIGraphGenome> StochasticUniversalSampling(ArrayList<SIGraphGenome> selectionPool, double[] selectionP, int delta) {
         double r = RandomInstance.nextDouble(1.0 / delta);
         double[] a = ToCumulative(selectionP);
 
         int i = 0;
         int current_member = 0;
-        SegmentedImageGenome[] samplePool = new SegmentedImageGenome[delta];
+        SIGraphGenome[] samplePool = new SIGraphGenome[delta];
 
         while (current_member < delta) {
             while (r <= a[i]) {

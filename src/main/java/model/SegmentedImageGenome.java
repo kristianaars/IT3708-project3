@@ -8,10 +8,10 @@ public class SegmentedImageGenome implements IGenome {
 
     public IFitness Fitness;
 
-    public ArrayList<Integer> genome;
+    public ArrayList<Integer> Genome;
 
     public SegmentedImageGenome(ArrayList<Integer> genome) {
-        this.genome = genome;
+        this.Genome = genome;
     }
 
     @Override
@@ -21,6 +21,7 @@ public class SegmentedImageGenome implements IGenome {
 
     @Override
     public int GetGenomeLength() {
-        return genome.size();
+        return Genome.size();
     }
+
 }

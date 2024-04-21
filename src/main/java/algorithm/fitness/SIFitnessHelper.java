@@ -1,10 +1,11 @@
 package algorithm.fitness;
 
+import model.SIGraphGenome;
 import utils.ImageUtils;
 import model.SIProblemInstance;
-import model.SegmentedImageGenome;
 
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -14,13 +15,10 @@ public class SIFitnessHelper {
 
     private final BufferedImage SourceImage;
 
-    private final int SegmentCount;
-
     public SIFitnessHelper(SIProblemInstance problemInstance) {
         this.ProblemInstance = problemInstance;
 
         this.SourceImage = problemInstance.TestImage;
-        this.SegmentCount = problemInstance.MaxSegmentCount;
     }
 
     /**
@@ -29,7 +27,7 @@ public class SIFitnessHelper {
      * @param individual The segmented image genome for which the edge value is calculated.
      * @return The edge value of the segmented image genome.
      */
-    public float EdgeValue(SegmentedImageGenome individual) {
+    public float EdgeValue(SIGraphGenome individual) {
         // Initialize edge value
         float edgeValue = 0;
 
@@ -50,8 +48,8 @@ public class SIFitnessHelper {
                 if(j < 0 || j >= l) continue;
 
                 // Get the segments of the current and neighboring pixels
-                int c_i = individual.genome.get(i);
-                int c_j = individual.genome.get(j);
+                int c_i = individual.GetPhenotype().get(i);
+                int c_j = individual.GetPhenotype().get(j);
 
                 // TODO: Dobbeltsjekk med TA om antagelsen min her er riktig
                 // Check if the segment of the current and neighboring pixels are different
@@ -61,7 +59,7 @@ public class SIFitnessHelper {
                     int[] rgb_j = ImageUtils.GetRGBArray(SourceImage, j % w, j / w);
 
                     // Calculate the RGB distance between the current and neighboring pixels
-                    edgeValue += RGBDistance(rgb_i, rgb_j);
+                    edgeValue += ImageUtils.RGBDistance(rgb_i, rgb_j);
                 }
             }
         }
@@ -70,7 +68,7 @@ public class SIFitnessHelper {
         return edgeValue;
     }
 
-    public float ConnectivityMeasure(SegmentedImageGenome individual) {
+    public float ConnectivityMeasure(SIGraphGenome individual) {
         float connectivityMeasure = 0;
 
         int l = individual.GetGenomeLength();
@@ -84,8 +82,8 @@ public class SIFitnessHelper {
                 if(j < 0 || j >= l) continue;
 
                 // Get the segments of the current and neighboring pixels
-                int c_i = individual.genome.get(i);
-                int c_j = individual.genome.get(j);
+                int c_i = individual.GetPhenotype().get(i);
+                int c_j = individual.GetPhenotype().get(j);
 
                 if(c_i != c_j) {
                     // Add penalty if neighboring pixels are not in same segment
@@ -97,34 +95,43 @@ public class SIFitnessHelper {
         return connectivityMeasure;
     }
 
-    public float OverallDeviation(SegmentedImageGenome individual) {
+    public float OverallDeviation(SIGraphGenome individual) {
         // Get the width of the source image
         int w = SourceImage.getWidth();
-
+        int segmentCount = individual.GetSegmentCount();
+        int l = individual.GetGenomeLength();
         float deviation = 0;
 
-        for(int k = 0; k < SegmentCount; k++) {
-            int finalK = k; // To make k compatible with lambda function
+        ArrayList<ArrayList<Integer>> segmentIndices = new ArrayList<>(segmentCount);
 
-            List<Integer> k_indices = IntStream.range(0, individual.GetGenomeLength())
-                    .filter(i -> individual.genome.get(i) == finalK)
-                    .boxed()
-                    .toList();
+        for(int i = 0; i < segmentCount; i++) {
+            segmentIndices.add(new ArrayList<>());
+        }
+
+        for(int i = 0; i < l; i++) {
+            int segment = individual.GetPhenotype().get(i);
+            segmentIndices.get(segment).add(i);
+        }
+
+        for(int k = 0; k < segmentCount; k++) {
+            List<Integer> k_indices = segmentIndices.get(k);
 
             // mu_k will contain the average pixel value for the given segment
             int[] mu_k = new int[3];
             for(int i : k_indices) {
                 int[] rgb_i = ImageUtils.GetRGBArray(SourceImage, i % w, i / w);
-                mu_k[0] += rgb_i[0];
-                mu_k[1] += rgb_i[1];
-                mu_k[2] += rgb_i[2];
+                mu_k[0] += rgb_i[0] * rgb_i[0];
+                mu_k[1] += rgb_i[1] * rgb_i[1];
+                mu_k[2] += rgb_i[2] * rgb_i[2];
             }
 
-            mu_k[0] /= k_indices.size(); mu_k[1] /= k_indices.size(); mu_k[2] /= k_indices.size();
+            mu_k[0] = (int) (Math.sqrt(mu_k[0]) / k_indices.size());
+            mu_k[1] = (int) (Math.sqrt(mu_k[1]) / k_indices.size());
+            mu_k[2] = (int) (Math.sqrt(mu_k[2]) / k_indices.size());
 
             for(int i : k_indices) {
                 int[] rgb_i = ImageUtils.GetRGBArray(SourceImage, i % w, i / w);
-                deviation += RGBDistance(rgb_i, mu_k);
+                deviation += ImageUtils.RGBDistance(rgb_i, mu_k);
             }
         }
 
@@ -145,18 +152,5 @@ public class SIFitnessHelper {
         };
     }
 
-    /**
-     * Calculates the Euclidean distance for two pixes in the RGB space.
-     * @param i First pixel value array (RGB)
-     * @param j Second pixel value array (RGB)
-     * @return The Euclidean distance value of pixels i and j in the RGB space
-     */
-    private float RGBDistance(int[] i, int[] j) {
-        return (float) Math.sqrt(
-                ( (i[0] - j[0]) ^ 2 ) +
-                ( (i[1] - j[1]) ^ 2 ) +
-                ( (i[2] - j[2]) ^ 2 )
-        );
-    }
 
 }

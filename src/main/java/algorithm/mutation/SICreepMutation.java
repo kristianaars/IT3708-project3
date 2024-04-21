@@ -10,7 +10,7 @@ public class SICreepMutation implements IMutation<SegmentedImageGenome> {
     private final Random RandomInstance;
     private final SIProblemInstance ProblemInstance;
 
-    private final int MAX_STEP_SIZE = 4;
+    private final int MAX_STEP_SIZE = 1;
 
     public SICreepMutation(SIProblemInstance problemInstance) {
         this.ProblemInstance = problemInstance;
@@ -30,11 +30,11 @@ public class SICreepMutation implements IMutation<SegmentedImageGenome> {
                 int incWeight = RandomInstance.nextInt(1, MAX_STEP_SIZE + 1);
                 int inc = (RandomInstance.nextBoolean() ? 1 : -1) * incWeight;
 
-                int existingVal = individual.genome.get(i);
+                int existingVal = individual.Genome.get(i);
                 int newVal = existingVal + inc;
 
                 if(newVal > 0 && newVal <= maxVal) {
-                    individual.genome.set(i, newVal);
+                    individual.Genome.set(i, newVal);
                     isMutated = true;
                 }
             }

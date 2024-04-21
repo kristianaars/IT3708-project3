@@ -19,4 +19,19 @@ public class ImageUtils {
         return rgbArray;
     }
 
+    /**
+     * Calculates the Euclidean distance for two pixes in the RGB space.
+     * @param i First pixel value array (RGB)
+     * @param j Second pixel value array (RGB)
+     * @return The Euclidean distance value of pixels i and j in the RGB space
+     */
+    public static float RGBDistance(int[] i, int[] j) {
+        return (float) Math.sqrt(
+                Math.pow(i[0] - j[0], 2) +
+                        Math.pow(i[1] - j[1], 2) +
+                        Math.pow(i[2] - j[2], 2)
+        );
+    }
+
+
 }

@@ -15,15 +15,15 @@ public class SIRandomResettingMutation implements IMutation<SegmentedImageGenome
     public boolean mutate(SegmentedImageGenome individual, float p_m) {
         boolean isMutated = false;
 
-        int max = individual.genome.stream().mapToInt(i -> i).max().orElse(-1);
-        int min = individual.genome.stream().mapToInt(i -> i).min().orElse(-1);
+        int max = individual.Genome.stream().mapToInt(i -> i).max().orElse(-1);
+        int min = individual.Genome.stream().mapToInt(i -> i).min().orElse(-1);
 
         int l = individual.GetGenomeLength();
 
         for(int i = 0; i < l; i ++) {
             if(RandomInstance.nextFloat() < p_m) {
                 int resetVal = RandomInstance.nextInt(min, max + 1);
-                individual.genome.set(i, resetVal);
+                individual.Genome.set(i, resetVal);
                 isMutated = true;
             }
         }

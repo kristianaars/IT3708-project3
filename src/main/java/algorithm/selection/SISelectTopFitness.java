@@ -1,9 +1,10 @@
 package algorithm.selection;
+import model.SIGraphGenome;
 import model.SegmentedImageGenome;
 
 import java.util.ArrayList;
 
-public class SISelectTopFitness implements ISelection<SegmentedImageGenome> {
+public class SISelectTopFitness implements ISelection<SIGraphGenome> {
 
     /***
      * Selects top mu members from population based on who has the highest fitness value
@@ -12,7 +13,7 @@ public class SISelectTopFitness implements ISelection<SegmentedImageGenome> {
      * @return Top mu members from population
      */
     @Override
-    public ArrayList<SegmentedImageGenome> Select(ArrayList<SegmentedImageGenome> population, int mu) {
+    public ArrayList<SIGraphGenome> Select(ArrayList<SIGraphGenome> population, int mu) {
         return new ArrayList<>(population
                 .stream()
                 .sorted((i, j) ->

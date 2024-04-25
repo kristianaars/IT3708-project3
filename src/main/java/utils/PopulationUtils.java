@@ -12,36 +12,42 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Random;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class PopulationUtils {
+
+    private final Random RandomInstance;
 
     private final SIProblemInstance ProblemInstance;
 
     public PopulationUtils(SIProblemInstance problemInstance) {
         this.ProblemInstance = problemInstance;
+        this.RandomInstance = new Random();
     }
 
-    public ArrayList<SIGraphGenome> GeneratePopulation(int populationSize) {
+    public ArrayList<SIGraphGenome> GeneratePopulation(int populationSize, int minSegmentCount, int maxSegmentCount) {
         ArrayList<SIGraphGenome> population = new ArrayList<>(populationSize);
         for(int i = 0; i < populationSize; i++) {
-            population.add(GenerateIndividual());
+            population.add(GenerateIndividual(minSegmentCount, maxSegmentCount));
         }
 
         return population;
     }
 
-    private SIGraphGenome GenerateIndividual() {
+    private SIGraphGenome GenerateIndividual(int minSegmentCount, int maxSegmentCount) {
         int width = ProblemInstance.ImageWidth;
         int height = ProblemInstance.ImageHeight;
         int n = width * height;
 
         Graph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
 
+        int segmentCount = RandomInstance.nextInt(minSegmentCount, maxSegmentCount + 1);
+        int nodeOffset = RandomInstance.nextInt(n);
+
         // Add all nodes
         for(int i = 0; i < n; i++) {
-            graph.addVertex(i);
+            graph.addVertex((i + nodeOffset) % n);
         }
 
         // Add edged between nodes
@@ -51,8 +57,8 @@ public class PopulationUtils {
             int up_i = i - width;
             int down_i = i + width;
 
-            if(left_i > 0) { CalculateAndAddEdge(i, left_i, graph); }
-            if(right_i < n) { CalculateAndAddEdge(i, right_i, graph); }
+            if(i % width != 0) { CalculateAndAddEdge(i, left_i, graph); }
+            if(i % width != (width - 1)) { CalculateAndAddEdge(i, right_i, graph); }
             if(up_i > 0) { CalculateAndAddEdge(i, up_i, graph); }
             if(down_i < n) { CalculateAndAddEdge(i, down_i, graph); }
         }
@@ -62,34 +68,95 @@ public class PopulationUtils {
 
         ArrayList<SIGraphDirection> genome = new ArrayList<>(n);
         for(int i = 0; i < n; i++) {
-            //genome.add(SIGraphDirection.End);
-
-            if(i - 1 > 0) {
-                genome.add(SIGraphDirection.Left);
-            } else {
-                genome.add(SIGraphDirection.End);
-            }
+            genome.add(SIGraphDirection.End);
         }
 
-        for(DefaultWeightedEdge edge : mst.getEdges()) {
-            int s = graph.getEdgeSource(edge);
-            int t = graph.getEdgeTarget(edge);
+        ArrayList<DefaultWeightedEdge> mstTreeEdges = new ArrayList<>(
+                mst.getEdges()
+                .stream()
+                .sorted(Comparator.comparingDouble(graph::getEdgeWeight))
+                .limit(n - (segmentCount))
+                .toList());
 
-            int d = t - s;
+        Graph<Integer, DefaultWeightedEdge> mstGraph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
 
-            if(d == 1 && s - 1 > 0) { genome.set(s, SIGraphDirection.Left); }
-            else if(d == -1 && s + 1 < n) { genome.set(s, SIGraphDirection.Right); }
-            else if(d == width && s - width > 0) { genome.set(s, SIGraphDirection.Up); }
-            else if(d == -width && s + width < n) { genome.set(s, SIGraphDirection.Down); }
+        for(Integer v : graph.vertexSet()) {
+            mstGraph.addVertex(v);
+        }
+
+        for(DefaultWeightedEdge e : mstTreeEdges) {
+            mstGraph.addEdge(graph.getEdgeSource(e), graph.getEdgeTarget(e));
+        }
+
+        List<Integer> leafNodes = mstGraph.vertexSet().stream()
+                .filter(key -> mstGraph.outgoingEdgesOf(key).size() == 1).toList();
+
+        // First, specify all leaf nodes
+        for(Integer v : leafNodes) {
+            DefaultWeightedEdge e = mstGraph.outgoingEdgesOf(v).stream().findFirst().orElse(null);
+
+            if(e!=null) {
+                int s = v;
+                int t = mstGraph.getEdgeSource(e) == s ? mstGraph.getEdgeTarget(e) : mstGraph.getEdgeSource(e);
+
+                int d = t - s;
+
+                genome.set(s, TranslateDirection(d, width));
+                mstGraph.removeEdge(e);
+            }
+
+        }
+
+        // Then start at each leaf node, and build subgraph until another existing graph blocks the way
+        for(int i = 0; i < leafNodes.size(); i++) {
+            int s = TraverseDirection(leafNodes.get(i), genome.get(leafNodes.get(i)), width, n);
+
+            BuildSubGraph(s, width, genome, mstGraph, false);
         }
 
         return new SIGraphGenome(genome, width, height);
     }
 
+    private void BuildSubGraph(int s, int w, ArrayList<SIGraphDirection> genome, Graph<Integer, DefaultWeightedEdge> graph, boolean allowEnd) {
+        if(!allowEnd && genome.get(s) != SIGraphDirection.End) { return; }
+
+        Set<DefaultWeightedEdge> allowedEdges = graph.outgoingEdgesOf(s);
+
+        if(allowedEdges.size() == 1) {
+            DefaultWeightedEdge e = allowedEdges.stream().findAny().orElse(null);
+            int t = graph.getEdgeSource(e) == s ? graph.getEdgeTarget(e) : graph.getEdgeSource(e);
+
+            genome.set(s, TranslateDirection(t - s, w));
+            graph.removeEdge(e);
+            BuildSubGraph(t, w, genome, graph, allowEnd);
+        }
+
+    }
+
+    private SIGraphDirection TranslateDirection(int d, int w) {
+        if(d == 1) { return SIGraphDirection.Right; }
+        else if(d == -1) { return SIGraphDirection.Left; }
+        else if(d == -w) { return SIGraphDirection.Up; }
+        else if(d == w) { return SIGraphDirection.Down; }
+        else {
+            return null;
+        }
+    }
+
+    private int TraverseDirection(int i, SIGraphDirection d, int w, int n) {
+        return switch (d) {
+            case Right -> i + 1;
+            case Left -> i - 1;
+            case Up -> i - w;
+            case Down -> i + w;
+            default -> i;
+        };
+    }
+
     private void CalculateAndAddEdge(int source, int target, Graph<Integer, DefaultWeightedEdge> graph) {
         DefaultWeightedEdge e = graph.addEdge(source, target);
         if(e!=null) {
-            // This means edge has already been added the other way
+            // This means edge has already been added the other direction
             graph.setEdgeWeight(e, CalculateWeight(source, target));
         }
     }
@@ -110,26 +177,5 @@ public class PopulationUtils {
         return ImageUtils.RGBDistance(rgb1, rgb2);
     }
 
-
-    public static ArrayList<SegmentedImageGenome> GeneratePopulation(int populationSize, int genomeLength, int maxSegments) {
-        ArrayList<SegmentedImageGenome> population = new ArrayList<>(genomeLength);
-        for(int i = 0; i < populationSize; i++) {
-            population.add(GenerateIndividual(genomeLength, maxSegments));
-        }
-
-        return population;
-    }
-
-    public static SegmentedImageGenome GenerateIndividual(int genomeLength, int maxSegments) {
-        ArrayList<Integer> genome = new ArrayList<>(genomeLength);
-
-        Random random = new Random();
-
-        for(int i = 0; i < genomeLength; i++) {
-            genome.add(random.nextInt(maxSegments + 1));
-        }
-
-        return new SegmentedImageGenome(genome);
-    }
 
 }

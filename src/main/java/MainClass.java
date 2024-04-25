@@ -1,7 +1,8 @@
+import algorithm.IGeneticAlgorithm;
+import algorithm.SIGraphNSGAII;
 import algorithm.SIGraphSGA;
 import model.SIGraphGenome;
 import model.SIProblemInstance;
-import model.SegmentedImageGenome;
 import utils.PopulationUtils;
 
 import java.io.IOException;
@@ -14,6 +15,8 @@ public class MainClass {
         final int maxSegmentCount = 5;
 
         List<SIProblemInstance> problemInstances = List.of(
+                new SIProblemInstance(1, maxSegmentCount),
+                new SIProblemInstance(5, maxSegmentCount),
                 new SIProblemInstance(86016, maxSegmentCount),
                 new SIProblemInstance(118035, maxSegmentCount),
                 new SIProblemInstance(147091, maxSegmentCount),
@@ -22,14 +25,14 @@ public class MainClass {
                 new SIProblemInstance(353013, maxSegmentCount)
         );
 
-        SIProblemInstance problemInstance = problemInstances.get(0);
+        SIProblemInstance problemInstance = problemInstances.get(3);
 
         PopulationUtils populationUtils = new PopulationUtils(problemInstance);
 
-        ArrayList<SIGraphGenome> population = populationUtils.GeneratePopulation(50);
+        ArrayList<SIGraphGenome> population = populationUtils.GeneratePopulation(50, 2, 100);
 
-        SIGraphSGA alg = new SIGraphSGA(population, problemInstance);
+        IGeneticAlgorithm<SIGraphGenome> alg = new SIGraphSGA(population, problemInstance);
 
-        alg.Train(500, 0.00015f);
+        alg.Train(350, 0.00015f);
     }
 }

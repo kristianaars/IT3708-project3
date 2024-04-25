@@ -19,7 +19,8 @@ public class SIGraphRandomResetMutation implements IMutation<SIGraphGenome> {
         int l = individual.GetGenomeLength();
         int w = individual.Width;
 
-        /*if(RandomInstance.nextFloat() < p_m) {
+        /*
+        if(RandomInstance.nextFloat() < p_m) {
             int mutate_i = RandomInstance.nextInt(l);
 
             SIGraphDirection resetVal = null;
@@ -39,8 +40,8 @@ public class SIGraphRandomResetMutation implements IMutation<SIGraphGenome> {
 
             individual.Genome.set(mutate_i, resetVal);
             isMutated = true;
-        }*/
-
+        }
+        */
 
         for(int i = 0; i < l; i ++) {
             if(RandomInstance.nextFloat() < p_m) {
@@ -51,8 +52,8 @@ public class SIGraphRandomResetMutation implements IMutation<SIGraphGenome> {
                     resetVal = SIGraphDirection.GetRandom();
 
                     switch (resetVal) {
-                        case Right -> { valid = i + 1 < l; break; }
-                        case Left -> { valid = i - 1 > 0; break; }
+                        case Right -> { valid = i % w != (w - 1); break; }
+                        case Left -> { valid = i % w != 0; break; }
                         case Up -> {valid = i - w > 0; break; }
                         case Down -> {valid = i + w < l; break; }
                         case End -> {valid = true; }
@@ -63,6 +64,7 @@ public class SIGraphRandomResetMutation implements IMutation<SIGraphGenome> {
                 isMutated = true;
             }
         }
+
 
         return isMutated;
     }

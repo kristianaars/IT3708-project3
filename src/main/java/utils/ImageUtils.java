@@ -2,12 +2,32 @@ package utils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.WritableRaster;
+import java.io.File;
 import java.io.IOException;
 
 public class ImageUtils {
 
     public static BufferedImage LoadImage(String resourcePath) throws IOException {
         return ImageIO.read(ImageUtils.class.getResource(resourcePath));
+    }
+
+    public static void SaveImage(String name, BufferedImage image) {
+        try {
+            // retrieve image
+            File outputfile = new File(name);
+            ImageIO.write(image, "png", outputfile);
+        } catch (IOException e) {
+
+        }
+    }
+
+    static BufferedImage deepCopy(BufferedImage bi) {
+        ColorModel cm = bi.getColorModel();
+        boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
+        WritableRaster raster = bi.copyData(null);
+        return new BufferedImage(cm, raster, isAlphaPremultiplied, null);
     }
 
     public static int[] GetRGBArray(BufferedImage bufferedImage, int x, int y) {
@@ -28,8 +48,8 @@ public class ImageUtils {
     public static float RGBDistance(int[] i, int[] j) {
         return (float) Math.sqrt(
                 Math.pow(i[0] - j[0], 2) +
-                        Math.pow(i[1] - j[1], 2) +
-                        Math.pow(i[2] - j[2], 2)
+                Math.pow(i[1] - j[1], 2) +
+                Math.pow(i[2] - j[2], 2)
         );
     }
 

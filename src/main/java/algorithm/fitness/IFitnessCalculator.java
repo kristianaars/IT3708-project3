@@ -2,8 +2,8 @@ package algorithm.fitness;
 
 import model.IGenome;
 
-public interface IFitnessCalculator<I extends IGenome> {
+public interface IFitnessCalculator<I extends IGenome, J extends IFitness> {
 
-    public IFitness CalculateFitness(I genome);
+    public J CalculateFitness(I genome);
 
 }

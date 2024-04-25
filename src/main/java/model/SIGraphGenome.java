@@ -1,17 +1,22 @@
 package model;
 
 import algorithm.fitness.IFitness;
+import algorithm.fitness.SegmentedImageFitness;
+import utils.SegmentImageUtils;
 
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 public class SIGraphGenome implements IGenome {
 
-    public IFitness Fitness;
+    public SegmentedImageFitness Fitness;
 
     public ArrayList<SIGraphDirection> Genome;
 
     private ArrayList<Integer> Phenotype;
+    public BufferedImage PhenotypeImage;
     private int SegmentCount;
+    public int SmallSegmentCount;
 
     public final int Width;
     public final int Height;
@@ -32,6 +37,16 @@ public class SIGraphGenome implements IGenome {
         if(Phenotype == null) {
             GeneratePhenotype();
         }
+
+        /*return new ArrayList<Integer>(List.of(
+                0, 0, 0, 0, 1, 1,
+                0, 0, 0, 0, 1, 1,
+                0, 0, 0, 0, 1, 1,
+                0, 0, 0, 0, 1, 1,
+                0, 0, 0, 0, 1, 1,
+                2, 2, 2, 0, 1, 1,
+                2, 2, 2, 0, 0, 0
+        ));*/
 
         return Phenotype;
     }
@@ -80,9 +95,7 @@ public class SIGraphGenome implements IGenome {
                 // Node has been visited before from another segment. We want to add all visited nodes to that segment
                 segment = phenotype.get(genomeIndex);
             } else {
-                if(!visitedNodes.isEmpty()) {
-                    currSegment++;
-                }
+                currSegment++;
             }
 
             // Set the visited nodes to the correct segment
@@ -91,9 +104,30 @@ public class SIGraphGenome implements IGenome {
             }
         }
 
+        final int min_seg_size = 150;
+        int[] segmentSize = new int[currSegment];
+
+        for(int i = 0; i < phenotype.size(); i++) {
+            segmentSize[phenotype.get(i)] += 1;
+        }
+
+        SmallSegmentCount = 0;
+        for(int sSize : segmentSize) {
+            if(sSize < min_seg_size) {
+                SmallSegmentCount++;
+            }
+        }
 
         SegmentCount = currSegment;
         Phenotype = phenotype;
+    }
+
+    // Dominance check method
+    public boolean Dominates(SIGraphGenome other) {
+        boolean dom = (this.Fitness.EdgeValue <= other.Fitness.EdgeValue && this.Fitness.OverallDeviation <= other.Fitness.OverallDeviation && this.Fitness.ConnectivityMeasure <= other.Fitness.ConnectivityMeasure) &&
+                (this.Fitness.EdgeValue <  other.Fitness.EdgeValue || this.Fitness.OverallDeviation <  other.Fitness.OverallDeviation || this.Fitness.ConnectivityMeasure > other.Fitness.ConnectivityMeasure);
+
+        return dom;
     }
 
     @Override
@@ -106,5 +140,16 @@ public class SIGraphGenome implements IGenome {
         return Genome.size();
     }
 
+    /*
+    @Override
+    public String toString() {
+        String s = "";
+        for(int i = 0; i < GetGenomeLength(); i++) {
+            if(i % Width == 0) {s += "\n"; }
+            s += SIGraphDirection.ToStringSymbol(Genome.get(i));
+        }
 
+        return s;
+    }
+    */
 }

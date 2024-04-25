@@ -3,13 +3,11 @@ package algorithm;
 import algorithm.crossover.ICrossover;
 import algorithm.crossover.SIGraphOPCrossover;
 import algorithm.crossover.SIGraphUniformCrossover;
-import algorithm.crossover.SIOnePointCrossover;
 import algorithm.fitness.IFitnessCalculator;
 import algorithm.fitness.SegmentedImageWSFCalculator;
+import algorithm.fitness.SegmentedImageFitness;
 import algorithm.mutation.IMutation;
-import algorithm.mutation.SICreepMutation;
 import algorithm.mutation.SIGraphRandomResetMutation;
-import algorithm.mutation.SIRandomResettingMutation;
 import algorithm.parentselection.IParentSelection;
 import algorithm.parentselection.SIFitnessProportionalProbabilityParentSelection;
 import algorithm.parentselection.SISelectRandomParents;
@@ -18,7 +16,7 @@ import algorithm.selection.SISelectTopFitness;
 import model.SIGraphDirection;
 import model.SIGraphGenome;
 import model.SIProblemInstance;
-import model.SegmentedImageGenome;
+import utils.ImageUtils;
 import utils.SegmentImageUtils;
 
 import java.awt.image.BufferedImage;
@@ -32,7 +30,7 @@ public class SIGraphSGA implements IGeneticAlgorithm<SIGraphGenome> {
     private final ICrossover<SIGraphGenome> Crossover;
     private final ISelection<SIGraphGenome> Select;
     private final IParentSelection<SIGraphGenome> ParentSelection;
-    private final IFitnessCalculator<SIGraphGenome> FitnessCalculator;
+    private final IFitnessCalculator<SIGraphGenome, SegmentedImageFitness> FitnessCalculator;
 
     private final SIProblemInstance ProblemInstance;
 
@@ -50,9 +48,9 @@ public class SIGraphSGA implements IGeneticAlgorithm<SIGraphGenome> {
         Crossover = new SIGraphUniformCrossover();
         FitnessCalculator = new SegmentedImageWSFCalculator(ProblemInstance);
         Select = new SISelectTopFitness();
-        ParentSelection = new SISelectRandomParents();
+        ParentSelection = new SIFitnessProportionalProbabilityParentSelection();
 
-        SegmentImgUtils = new SegmentImageUtils(ProblemInstance.ImageWidth, ProblemInstance.ImageHeight);
+        SegmentImgUtils = new SegmentImageUtils(ProblemInstance.ImageWidth, ProblemInstance.ImageHeight, problemInstance);
     }
 
     @Override
@@ -82,10 +80,6 @@ public class SIGraphSGA implements IGeneticAlgorithm<SIGraphGenome> {
             Population = Select.Select(Population, populationSize);
 
             if(e % 1 == 0) {
-                BufferedImage sampleImg = SegmentImgUtils.GenerateSegmentedImage(Population.getFirst());
-
-                int seg = (int) Population.getFirst().Genome.stream().filter(g -> g == SIGraphDirection.End).count();
-
                 System.out.printf("Epoch: %s; Average fitness: %.3f; Min fitness: %.3f; Max fitness: %.3f;s\n",
                         e,
                         GetAveragePopulationFitness(),
@@ -93,6 +87,17 @@ public class SIGraphSGA implements IGeneticAlgorithm<SIGraphGenome> {
                         GetMaxPopulationFitness());
             }
         }
+
+        SIGraphGenome optimalSolution = Population.getFirst();
+        String filename = String.format("%s_Segments%s_EdgeValue_%.0f_Conn_%s_Dev_%s_SGA_",
+                ProblemInstance.InstanceId,
+                optimalSolution.GetSegmentCount(),
+                optimalSolution.Fitness.EdgeValue,
+                optimalSolution.Fitness.ConnectivityMeasure,
+                optimalSolution.Fitness.OverallDeviation);
+
+        ImageUtils.SaveImage(filename + "_OPT_type1.png", SegmentImgUtils.GeneratedSegmentedOverlayImageType1(optimalSolution));
+        ImageUtils.SaveImage(filename + "_OPT_type2.png", SegmentImgUtils.GeneratedSegmentedOverlayImageType2(optimalSolution));
     }
 
     @Override

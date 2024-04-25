@@ -18,4 +18,24 @@ public enum SIGraphDirection {
             default -> null;
         };
     }
+
+    public static SIGraphDirection Reverse(SIGraphDirection direction) {
+        return switch (direction) {
+            case Right -> SIGraphDirection.Left;
+            case Left -> SIGraphDirection.Right;
+            case Up -> SIGraphDirection.Down;
+            case Down -> SIGraphDirection.Up;
+            default -> direction;
+        };
+    }
+
+    public static String ToStringSymbol(SIGraphDirection direction) {
+        return switch (direction) {
+            case Right -> "→";
+            case Left -> "←";
+            case Up -> "↑";
+            case Down -> "↓";
+            default -> "•";
+        };
+    }
 }

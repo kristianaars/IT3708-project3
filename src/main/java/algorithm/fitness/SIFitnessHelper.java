@@ -75,9 +75,7 @@ public class SIFitnessHelper {
 
         for(int i = 0; i < l; i++) {
 
-            int[] J = F(i);
-
-            for(int j : J) {
+            for(int j : F(i)) {
                 // Skip if neighborhood is outside of image bounds
                 if(j < 0 || j >= l) continue;
 
@@ -87,7 +85,7 @@ public class SIFitnessHelper {
 
                 if(c_i != c_j) {
                     // Add penalty if neighboring pixels are not in same segment
-                    connectivityMeasure += (float) (1.0 / 8);
+                    connectivityMeasure += (1.0f / 8.0f);
                 }
             }
         }
@@ -120,14 +118,14 @@ public class SIFitnessHelper {
             int[] mu_k = new int[3];
             for(int i : k_indices) {
                 int[] rgb_i = ImageUtils.GetRGBArray(SourceImage, i % w, i / w);
-                mu_k[0] += rgb_i[0] * rgb_i[0];
-                mu_k[1] += rgb_i[1] * rgb_i[1];
-                mu_k[2] += rgb_i[2] * rgb_i[2];
+                mu_k[0] += rgb_i[0];
+                mu_k[1] += rgb_i[1];
+                mu_k[2] += rgb_i[2];
             }
 
-            mu_k[0] = (int) (Math.sqrt(mu_k[0]) / k_indices.size());
-            mu_k[1] = (int) (Math.sqrt(mu_k[1]) / k_indices.size());
-            mu_k[2] = (int) (Math.sqrt(mu_k[2]) / k_indices.size());
+            mu_k[0] = (int) (mu_k[0] / k_indices.size());
+            mu_k[1] = (int) (mu_k[1] / k_indices.size());
+            mu_k[2] = (int) (mu_k[2] / k_indices.size());
 
             for(int i : k_indices) {
                 int[] rgb_i = ImageUtils.GetRGBArray(SourceImage, i % w, i / w);
@@ -145,11 +143,25 @@ public class SIFitnessHelper {
      */
     private int[] F(int i) {
         int w = SourceImage.getWidth();
-        return new int[] {
-                i-w-1, i-w, i-w+1,
-                i-1, i+1,
-                i+w-1, i+w , i+w+1
+        int[] F = new int[] {
+                i-w-1, // Top left
+                i-w, // Top Middle
+                i-w+1, // Top Right
+                i-1, // Left
+                i+1, // Right
+                i+w-1, // Bottom left
+                i+w, // Bottom middle
+                i+w+1 // Bottom right
         };
+
+        // Validate
+        // The pixel is on the left of the image, set all left-neighbors to -1 to disable
+        if(i % w == 0) F[0] = F[3] = F[5] = -1;
+
+        // Check if center pixel is on the right of the image, set all right-neighbors to -1 to disable
+        else if(i % w == (w - 1)) F[2] = F[4] = F[7] = -1;
+
+        return F;
     }
 
 
